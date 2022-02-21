@@ -28,7 +28,7 @@ export default class AppClass extends React.Component {
       this.state.grid,
       this.state.currCoordinates
     );
-    if (failed === 0) {
+    if (!failed) {
       this.setState({
         ...this.state,
         grid,
