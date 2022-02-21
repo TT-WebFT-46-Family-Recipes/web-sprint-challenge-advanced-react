@@ -20,7 +20,8 @@ export default function AppFunctional({ className }) {
   } = useGrid(GRIDAREA);
 
   const handleMoveClick = (direction) => {
-    if (handleGridMove(direction) === 0) {
+    const failed = handleGridMove(direction);
+    if (!failed) {
       setStepsMoved((steps) => steps + 1);
       setMsg("");
     } else setMsg(ERRMSG + direction);
