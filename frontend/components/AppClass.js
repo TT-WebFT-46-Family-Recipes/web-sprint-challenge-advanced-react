@@ -1,40 +1,100 @@
-import React from 'react'
+import React from "react";
+import {
+  MOVES as availableMoves,
+  buildPerfectSquareGrid,
+  gridMove,
+  gridReset,
+} from "../utils/grid";
+import { sendEmail } from "../utils/sendEmail";
+import Grid from "./Grid";
 
 export default class AppClass extends React.Component {
+  GRIDAREA = 9;
+  NOSTEPS = 0;
+  ERRMSG = "You can't go ";
+
+  state = {
+    grid: buildPerfectSquareGrid(this.GRIDAREA),
+    currCoordinates: [],
+    stepsMoved: this.NOSTEPS,
+    msg: "",
+  };
+
+  emailForm = React.createRef();
+
+  handleMoveClick = (direction) => {
+    const [failed, grid, currCoordinates] = gridMove(
+      direction,
+      this.state.grid,
+      this.state.currCoordinates
+    );
+    if (!failed) {
+      this.setState({
+        ...this.state,
+        grid,
+        currCoordinates,
+        stepsMoved: this.state.stepsMoved + 1,
+        msg: "",
+      });
+    } else this.setState({ ...this.state, msg: this.ERRMSG + direction });
+  };
+
+  resetStateSetter = ({ grid, currCoordinates }) => {
+    this.setState({
+      ...this.state,
+      grid,
+      currCoordinates,
+      stepsMoved: this.NOSTEPS,
+      msg: "",
+    });
+  };
+
+  handleResetClick = () => {
+    gridReset(this.GRIDAREA, this.resetStateSetter);
+  };
+
+  handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    const [x, y] = this.state.currCoordinates;
+    const form = this.emailForm.current;
+
+    const resMsg = sendEmail({
+      x: x + 1,
+      y: y + 1,
+      steps: this.state.stepsMoved,
+      email: form.email.value,
+    });
+
+    this.setState({ ...this.state, msg: await resMsg });
+  };
+
+  initialStateSetter = ({ grid, currCoordinates }) => {
+    this.setState({ ...this.state, grid, currCoordinates });
+  };
+
+  componentDidMount() {
+    gridReset(this.GRIDAREA, this.initialStateSetter);
+  }
+
   render() {
-    const { className } = this.props
+    const [x, y] = this.state.currCoordinates;
+    const { className } = this.props;
+
     return (
-      <div id="wrapper" className={className}>
-        <div className="info">
-          <h3 id="coordinates">Coordinates (2, 2)</h3>
-          <h3 id="steps">You moved 0 times</h3>
-        </div>
-        <div id="grid">
-          <div className="square"></div>
-          <div className="square"></div>
-          <div className="square"></div>
-          <div className="square"></div>
-          <div className="square active">B</div>
-          <div className="square"></div>
-          <div className="square"></div>
-          <div className="square"></div>
-          <div className="square"></div>
-        </div>
-        <div className="info">
-          <h3 id="message"></h3>
-        </div>
-        <div id="keypad">
-          <button id="left">LEFT</button>
-          <button id="up">UP</button>
-          <button id="right">RIGHT</button>
-          <button id="down">DOWN</button>
-          <button id="reset">reset</button>
-        </div>
-        <form>
-          <input id="email" type="email" placeholder="type email"></input>
-          <input id="submit" type="submit"></input>
-        </form>
-      </div>
-    )
+      <Grid
+        className={className}
+        stepsMoved={this.state.stepsMoved}
+        grid={this.state.grid}
+        x={x}
+        y={y}
+        msg={this.state.msg}
+        availableMoves={availableMoves}
+        handleMoveClick={this.handleMoveClick}
+        handleResetClick={this.handleResetClick}
+        emailForm={this.emailForm}
+        handleFormSubmit={this.handleFormSubmit}
+      />
+    );
   }
 }
